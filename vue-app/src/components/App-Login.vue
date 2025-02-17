@@ -21,9 +21,9 @@
                         name="password"
                         required="true">
                     </text-input>  
-
+                    
                     <hr>
-                    <input class="btn btn-primary" type="submit" value="Login">
+                    <input type="submit" class="btn btn-primary" value="Login">
                 </form-tag>
             </div>
         </div>
@@ -31,24 +31,28 @@
 </template>
 
 <script>
-import TextInput from './forms/TextInput.vue'
 import FormTag from './forms/FormTag.vue'
+import TextInput from './forms/TextInput.vue'
+import { store } from './store.js'
+import router from './../router/index.js'
+import notie from 'notie'
 
 export default {
     name: 'AppLogin',
     components: { 
-        TextInput,
+        TextInput  ,
         FormTag,
     },
     data() {
         return {
             email: "",
             password: "",
+            store, 
         }
     },  
     methods: {
         submitHandler() {
-            console.log("submit handler called success!");
+            console.log("submitHandler called - success!");
 
             const payload = {
                 email: this.email,
@@ -57,19 +61,27 @@ export default {
 
             const requestOptions = {
                 method: "POST",
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
             }
 
             fetch("http://localhost:8081/users/login", requestOptions)
             .then((response) => response.json())
-            .then((data) => {
-                if(data.error) {
-                    console.log("Error:", data.message);
+            .then((response) => {
+                if (response.error) {
+                    console.log("Error:", response.message);
+                    notie.alert({
+                        type: 'error',
+                        text: response.message,
+                        // stay: true,
+                        // position: 'bottom',
+                    })
                 } else {
-                    console.log(data);
+                    console.log("Token:", response.data.token.token);
+                    store.token = response.data.token.token;
+                    router.push("/");
                 }
             })
         }
-    }, 
+    } 
 }
 </script>

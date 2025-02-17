@@ -2,14 +2,21 @@ package main
 
 import (
 	//"encoding/json"
+	"errors"
 	"net/http"
+	"time"
 )
 
+// jsonResponse is the type used for generic JSON responses
 type jsonResponse struct {
-	Error   bool   `json:"error"`
-	Message string `json:"message"`
+	Error   bool        `json:"error"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
 }
 
+type envelope map[string]interface{}
+
+// Login is the hanlder used to attemp to log a user into the api
 func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 
 	type credentials struct {
@@ -28,39 +35,46 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 		_ = app.writeJSON(w, http.StatusBadRequest, payload)
 	}
 
-	// err := json.NewDecoder(r.Body).Decode(&creds)
-	// if err != nil {
-	// 	//send back error message
-	// 	app.errorLog.Println("invalid json")
-
-	// 	payload.Error = true
-	// 	payload.Message = "invalid json"
-
-	// 	out, err := json.MarshalIndent(payload, "", "\t")
-	// 	if err != nil {
-	// 		app.errorLog.Println(err)
-	// 	}
-
-	// 	w.Header().Set("Content-Type", "application/json")
-	// 	w.WriteHeader(http.StatusOK)
-	// 	w.Write(out)
-	// 	return
-	// }
-
-	//authenticate
+	// TODO authenticate
 	app.infoLog.Println("Username:", creds.UserName, ". Password:", creds.Password)
 
-	//send back a response
-	payload.Error = false
-	payload.Message = "Signed in"
+	// Look up the user by email
+	user, err := app.models.User.GetByEmail(creds.UserName)
+	if err != nil {
+		app.errorJSON(w, errors.New("1invalid username/password"))
+		return
+	}
 
-	//out, err := json.MarshalIndent(payload, "", "\t")
+	// Validate the user's password
+	validPassword, err := user.PasswordMatches(creds.Password)
+	if err != nil || !validPassword {
+		app.errorJSON(w, errors.New("2invalid username/password"))
+		return
+	}
+
+	// We have a valid user, so generate a token
+	token, err := app.models.Token.GenerateToken(user.ID, 24*time.Hour)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	// Save it to the database
+	err = app.models.Token.Insert(*token, *user)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	//send back a response
+	payload = jsonResponse{
+		Error:   false,
+		Message: "Logged in",
+		Data:    envelope{"Token": token},
+	}
+
 	err = app.writeJSON(w, http.StatusOK, payload)
 	if err != nil {
 		app.errorLog.Println(err)
 	}
-
-	// w.Header().Set("Content-Type", "application/json")
-	// w.WriteHeader(http.StatusOK)
-	// w.Write(out)
 }

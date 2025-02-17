@@ -9,6 +9,7 @@ import (
 	"vue-api/internal/driver"
 )
 
+// config is the type for all application configuration
 type config struct {
 	port int
 }
@@ -20,6 +21,7 @@ type application struct {
 	models   data.Models
 }
 
+// main is the main entry point for our application
 func main() {
 	var cfg config
 	cfg.port = 8081
@@ -47,6 +49,7 @@ func main() {
 	}
 }
 
+// serve starts the web server
 func (app *application) serve() error {
 	app.infoLog.Println("API listening on port:", app.config.port)
 

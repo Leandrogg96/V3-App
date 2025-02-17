@@ -142,8 +142,7 @@ func (u *User) Update() error {
 		first_name = $2,
 		last_name = $3,
 		updated_at = $4
-		where id = $5
-	`
+		where id = $5`
 
 	_, err := db.ExecContext(ctx, stmt,
 		u.Email,
@@ -186,8 +185,8 @@ func (u *User) Insert(user User) (int, error) {
 
 	var newID int
 	stmt := `insert into users (email, first_name, last_name, password, created_at, updated_at)
-		values ($1, $2, $3, $4, $5, $6) returning id
-	`
+		values ($1, $2, $3, $4, $5, $6) returning id`
+
 	err = db.QueryRowContext(ctx, stmt,
 		user.Email,
 		user.FirstName,
@@ -256,8 +255,7 @@ func (t *Token) GetByToken(plainText string) (*Token, error) {
 	defer cancel()
 
 	query := `select id, user_id, email, token, token_hash, created_at, updated_at, expiry
-			from tokens where token = $1
-	`
+			from tokens where token = $1`
 
 	var token Token
 	row := db.QueryRowContext(ctx, query, plainText)
@@ -404,7 +402,7 @@ func (t *Token) DeleteByToken(plainText string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `delete from tokens when token = $1`
+	stmt := `delete from tokens where token = $1`
 
 	_, err := db.ExecContext(ctx, stmt, plainText)
 

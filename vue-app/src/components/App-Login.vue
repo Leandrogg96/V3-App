@@ -40,7 +40,7 @@ import notie from 'notie'
 export default {
     name: 'AppLogin',
     components: { 
-        TextInput  ,
+        TextInput,
         FormTag,
     },
     data() {

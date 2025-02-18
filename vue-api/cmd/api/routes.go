@@ -13,7 +13,7 @@ import (
 // Routes generates our routes and attaches them to handlers, using the chi router
 // Note that we return type http.Handler, and not *chi.Mux, since chi.Mux satisfies
 // The interface requirements for http.Hander, it makes sense to returns the type
-// That is part of the standard library
+// That is part of the standard library.
 func (app *application) routes() http.Handler {
 
 	mux := chi.NewRouter()
@@ -31,36 +31,17 @@ func (app *application) routes() http.Handler {
 	mux.Post("/users/login", app.Login)
 	mux.Post("/users/logout", app.Logout)
 
+	// All of this routes in the block below are prefixed whit /admin, and also require that the user have a valid token provided in the request
 	mux.Route("/admin", func(mux chi.Router) {
 		mux.Use(app.AuthTokenMiddleware)
 
-		mux.Post("/foo", func(w http.ResponseWriter, r *http.Request) {
-			payload := jsonResponse{
-				Error:   false,
-				Message: "bar",
-			}
-			app.writeJSON(w, http.StatusOK, payload)
-		})
+		mux.Post("/users", app.AllUsers)
+		mux.Post("/users/save", app.EditUser)
+		mux.Post("/users/get/{id}", app.GetUser)
 	})
 
-	mux.Get("/users/all", func(w http.ResponseWriter, r *http.Request) {
-		var users data.User
-
-		all, err := users.GetAll()
-		if err != nil {
-			app.errorLog.Println(err)
-			return
-		}
-
-		payload := jsonResponse{
-			Error:   false,
-			Message: "Success",
-			Data:    envelope{"users": all},
-		}
-
-		app.writeJSON(w, http.StatusOK, payload)
-	})
-
+	// ---------------------------------------------------------------------------------------------------------------------------------------------
+	// Auxiliar functions:
 	mux.Get("/users/add", func(w http.ResponseWriter, r *http.Request) {
 		var u = data.User{
 			Email:     "you@there.com",

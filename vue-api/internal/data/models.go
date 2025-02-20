@@ -152,7 +152,7 @@ func (u *User) Update() error {
 		first_name = $2,
 		last_name = $3,
 		user_active = $4,
-		updated_at = $5,
+		updated_at = $5
 		where id = $6
 	`
 
@@ -451,7 +451,7 @@ func (t *Token) DeleteTokensForUser(id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt := `delete from tokens where user_id = $1`
+	stmt := "delete from tokens where user_id = $1"
 
 	_, err := db.ExecContext(ctx, stmt, id)
 

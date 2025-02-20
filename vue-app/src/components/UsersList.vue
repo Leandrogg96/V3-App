@@ -11,6 +11,7 @@
                     <tr>
                         <th>User</th>
                         <th>Email</th>
+                        <th>Active</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -20,6 +21,14 @@
                             <router-link :to="`/admin/users/${u.id}`">{{ u.last_name }}, {{ u.first_name }}</router-link>
                         </td>
                         <td>{{ u.email }}</td>
+
+                        <td v-if="u.active === 1">
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td v-else>
+                            <span class="badge bg-danger">Inactive</span>
+                        </td>
+
                         <td v-if="u.token.id > 0">
                             <span class="badge bg-success" @click="logUserOut(u.id)">Logged in</span>
                         </td>
@@ -79,8 +88,18 @@ export default {
                 notie.confirm({
                     text: "Are you sure you want to log this user out?",
                     submitText: "Log Out",
-                    submitCallback: function() {
+                    submitCallback: () => {
                         console.log("Would log out user id", id);
+                        fetch(process.env.VUE_APP_API_URL + "/admin/log-user-out/" + id, Security.requestOptions(""))
+                        .then((response) => response.json())
+                        .then((data) => {
+                            if (data.error) {
+                                this.$emit('error', data.message);
+                            } else {
+                                this.$emit('success', data.message);
+                                this.$emit('forceUpdate');
+                            }
+                        })
                     }
                 })
             } else {

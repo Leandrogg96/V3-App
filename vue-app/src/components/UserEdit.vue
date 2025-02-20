@@ -56,6 +56,12 @@
 
                     <div class="form-check">
                         <input v-model="user.active" class="form-check-input" type="radio" id="user-active" :value="1">
+                        <label class="form-check-label" for="user-active">Active</label>
+                    </div>
+
+                    <div class="form-check">
+                        <input v-model="user.active" class="form-check-input" type="radio" id="user-active-2" :value="0">
+                        <label class="form-check-label" for="user-active-2">Inactive</label>
                     </div>
 
                     <hr>
@@ -134,6 +140,7 @@ export default {
                 last_name: this.user.last_name,
                 email: this.user.email,
                 password: this.user.password,
+                active: this.user.active,
             }
 
             fetch(`${process.env.VUE_APP_API_URL}/admin/users/save`, Security.requestOptions(payload))
@@ -142,7 +149,6 @@ export default {
                 if(data.error) {
                     this.$emit('error', data.message);
                 } else {
-                    this.ready = true;
                     this.$emit('success', "Changes saved!");
                     router.push("/admin/users");
                 }

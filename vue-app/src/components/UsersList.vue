@@ -6,11 +6,12 @@
             </div>
             <hr>
 
-            <table class="table table-compact table-striped">
+            <table v-if="this.ready" class="table table-compact table-striped">
                 <thead>
                     <tr>
                         <th>User</th>
                         <th>Email</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -19,9 +20,17 @@
                             <router-link :to="`/admin/users/${u.id}`">{{ u.last_name }}, {{ u.first_name }}</router-link>
                         </td>
                         <td>{{ u.email }}</td>
+                        <td v-if="u.token.id > 0">
+                            <span class="badge bg-success" @click="logUserOut(u.id)">Logged in</span>
+                        </td>
+                        <td v-else>
+                            <span class="badge bg-danger">Not logged in</span>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+
+            <p v-else>Loading...</p>
             
         </div>
     </div>
@@ -29,12 +38,20 @@
 
 <script>
 import Security from './security.js'
-import { notie } from 'notie';
+import notie from 'notie'
+import { store } from './store.js'
+
+// sleep causes a block of code to be executed with a predefined delay 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 export default {
     data() {
         return {
             users: [],
+            ready: false,
+            store,
         }
     },  
     beforeMount() {
@@ -44,20 +61,32 @@ export default {
         .then((response) => response.json())
         .then((response) => {
             if (response.error) {
-                notie.alert({
-                    type: "error",
-                    text: response.message, 
-                })
+                this.$emit('error', response.message)
             } else {
-                this.users = response.data.users;
+                sleep(500).then(() => {
+                    this.users = response.data.users;
+                    this.ready = true
+                });
             }
         })
         .catch((error) => {
-            notie.alert({
-                type: "error",
-                text: error,
-            })
+            this.$emit('error', error)
         });
+    },
+    methods: {
+        logUserOut(id) {
+            if (id !== store.user.id) {
+                notie.confirm({
+                    text: "Are you sure you want to log this user out?",
+                    submitText: "Log Out",
+                    submitCallback: function() {
+                        console.log("Would log out user id", id);
+                    }
+                })
+            } else {
+                this.$emit('error', "You cant' log yourself out!");
+            }
+        }
     }    
 } 
 </script>

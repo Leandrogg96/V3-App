@@ -6,7 +6,8 @@ import Book from "@/components/BookItem.vue";
 import BooksAdmin from "@/components/BooksAdmin.vue";
 import BookEdit from "@/components/BookEdit.vue";
 import Users from "@/components/UsersList.vue";
-import User from "@/components/UserEdit.vue"
+import User from "@/components/UserEdit.vue";
+import Security from "@/components/security"; 
 
 //import { compile } from "vue";
 
@@ -54,4 +55,7 @@ const routes = [
 ]
 
 const router = createRouter({history: createWebHistory(), routes})
+router.beforeEach(() => {
+    Security.checkToken();
+})
 export default router

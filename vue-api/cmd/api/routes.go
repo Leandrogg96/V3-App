@@ -31,6 +31,11 @@ func (app *application) routes() http.Handler {
 	mux.Post("/users/login", app.Login)
 	mux.Post("/users/logout", app.Logout)
 
+	mux.Post("/books", app.AllBooks)
+	mux.Get("/books", app.AllBooks)
+
+	mux.Post("/validate-token", app.ValidateToken)
+
 	// All of this routes in the block below are prefixed whit /admin, and also require that the user have a valid token provided in the request
 	mux.Route("/admin", func(mux chi.Router) {
 		mux.Use(app.AuthTokenMiddleware)
@@ -133,6 +138,10 @@ func (app *application) routes() http.Handler {
 		app.writeJSON(w, http.StatusOK, payload)
 
 	})
+
+	// Static files
+	filesServer := http.FileServer(http.Dir("./static/"))
+	mux.Handle("/static/*", http.StripPrefix("/static", filesServer))
 
 	return mux
 }

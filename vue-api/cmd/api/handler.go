@@ -256,3 +256,41 @@ func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 }
+
+func (app *application) ValidateToken(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		Token string `json:"token"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	valid := false
+	valid, _ = app.models.Token.ValidToken(requestPayload.Token)
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  valid,
+	}
+
+	_ = app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *application) AllBooks(w http.ResponseWriter, r *http.Request) {
+	books, err := app.models.Book.GetAll()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "success",
+		Data:    envelope{"books": books},
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}

@@ -1,7 +1,7 @@
 <template>
   <Header />
   <div>
-    <router-view :key="componentKey" @success="success" @error="error" @warning="warning" @forceUpdate="forceUpdate"/>
+    <router-view :key="componentKey" @success="success" @error="error" @warning="warning" @forceUpdate="forceUpdate" />
   </div>
   <Footer />
 </template>
@@ -87,6 +87,9 @@ export default {
         type: 'warning',
         text: msg,
       })
+    },
+    forceUpdate() {
+      this.componentKey += 1;
     }
   }
 } 

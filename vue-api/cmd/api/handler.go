@@ -2,14 +2,20 @@ package main
 
 import (
 	//"encoding/json"
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 	"vue-api/internal/data"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mozillazg/go-slugify"
 )
+
+var staticPath = "./static/"
 
 // jsonResponse is the type used for generic JSON responses
 type jsonResponse struct {
@@ -299,6 +305,123 @@ func (app *application) OneBook(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
 	book, err := app.models.Book.GetOneBySlug(slug)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  book,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *application) AuthorsAll(w http.ResponseWriter, r *http.Request) {
+	all, err := app.models.Author.All()
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	type selectData struct {
+		Value int    `json:"value"`
+		Text  string `json:"text"`
+	}
+
+	var results []selectData
+
+	for _, x := range all {
+		author := selectData{
+			Value: x.ID,
+			Text:  x.AuthorName,
+		}
+		results = append(results, author)
+	}
+
+	payload := jsonResponse{
+		Error: false,
+		Data:  results,
+	}
+
+	app.writeJSON(w, http.StatusOK, payload)
+}
+
+func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
+	var requestPayload struct {
+		ID              int    `json:"id"`
+		Title           string `json:"title"`
+		AuthorID        int    `json:"author_id"`
+		PublicationYear int    `json:"publication_year"`
+		Description     string `json:"description"`
+		CoverBase64     string `json:"cover"`
+		GenreIDs        []int  `json:"genre_ids"`
+	}
+
+	err := app.readJSON(w, r, &requestPayload)
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	book := data.Book{
+		ID:              requestPayload.ID,
+		Title:           requestPayload.Title,
+		AuthorID:        requestPayload.AuthorID,
+		PublicationYear: requestPayload.PublicationYear,
+		Description:     requestPayload.Description,
+		Slug:            slugify.Slugify(requestPayload.Title),
+		GenreIDs:        requestPayload.GenreIDs,
+	}
+
+	if len(requestPayload.CoverBase64) > 0 {
+		// We have a cover
+		decoded, err := base64.StdEncoding.DecodeString(requestPayload.CoverBase64)
+		if err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+
+		// Write image to '/static/covers'
+		if err := os.WriteFile(fmt.Sprintf("%s/covers/%s.jpg", staticPath, book.Slug), decoded, 0666); err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+	}
+
+	if book.ID == 0 {
+		// ading a book
+		_, err := app.models.Book.Insert(book)
+		if err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+	} else {
+		// updating a book
+		err := book.Update()
+		if err != nil {
+			app.errorJSON(w, err)
+			return
+		}
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: "Changes saved!",
+	}
+
+	app.writeJSON(w, http.StatusAccepted, payload)
+}
+
+func (app *application) BookByID(w http.ResponseWriter, r *http.Request) {
+	bookID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		app.errorJSON(w, err)
+		return
+	}
+
+	book, err := app.models.Book.GetOneById(bookID)
 	if err != nil {
 		app.errorJSON(w, err)
 		return

@@ -29,7 +29,7 @@ const routes = [
     },
     {
         path: '/books/:bookName',
-        name: 'Book',
+        name: 'BookItem',
         component: Book,
     },
     {

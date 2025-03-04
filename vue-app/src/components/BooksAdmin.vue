@@ -33,7 +33,7 @@
 import Security from './security.js'
 
 export default {
-    name: 'BooksAdmin',
+    name: "BooksAdmin",
     data() {
         return {
             books: {},

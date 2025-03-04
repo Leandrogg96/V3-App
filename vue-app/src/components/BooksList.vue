@@ -31,8 +31,7 @@
                                     <h6 class="card-title">{{ b.title }}</h6>
                                     <span class="book-author">{{ b.author.author_name }}</span><br>
                                     <small class="text-muted book-genre" v-for="(g, index) in b.genres" v-bind:key="g.id">
-                                        <em class="me-1">{{ g.genre_name }}
-                                            <template v-if="index !== (b.genres.length -1)">,</template>
+                                        <em class="me-1">{{ g.genre_name }}<template v-if="index !== (b.genres.length -1)">,</template>
                                         </em>
                                     </small>
                                 </div>
@@ -48,10 +47,10 @@
 </template>
 
 <script>
-import { store } from './store';
+import { store } from '@/components/store';
 
 export default {
-    name: 'BooksList',
+    name: "BooksList",
     data () {
         return {
             store,

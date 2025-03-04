@@ -1,7 +1,7 @@
 <template>
   <Header />
   <div>
-    <router-view  v-slot="{ Component }" :key="componentKey" @success="success" @error="error" @warning="warning" @forceUpdate="forceUpdate">
+    <router-view v-slot="{ Component }" :key="componentKey" @success="success" @error="error" @warning="warning" @forceUpdate="forceUpdate">
       <keep-alive include="BooksList">
         <component :is="Component" />
       </keep-alive>
@@ -14,7 +14,7 @@
 import Header from "./components/App-Header";
 import Footer from "./components/App-Footer";
 import { store } from './components/store.js';
-import notie from 'notie';
+import notie from 'notie'
 
 const getCookie = (name) => {
   return document.cookie.split("; ").reduce((r,v) => {
@@ -51,27 +51,6 @@ export default {
         email: cookieData.user.email,
       };
     }
-  },
-  mounted() {
-    const payload = {
-      foo: "bar",
-    }
-
-    const headers = new Headers();
-    headers.append("Content-Type", "application/json");
-    headers.append("Authorization", "Bearer " + store.token);
-    
-    const requestOptions = {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: headers,
-    }
-    
-    fetch("http://localhost:8081/admin/foo", requestOptions)
-    .then((response) => response.json())
-    .then((data) => {
-      console.log(data);
-    })
   },
   methods: {
     success(msg) {

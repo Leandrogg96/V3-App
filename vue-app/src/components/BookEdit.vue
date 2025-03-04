@@ -7,7 +7,7 @@
 
                 <form-tag @bookEditEvent="submitHandler" name="bookForm" event="bookEditEvent"> 
 
-                    <div v-if="this.book.slug != ''" class="mb-3">
+                    <div v-if="this.book.slug !== ''" class="mb-3">
                         <img :src="`${this.imgPath}/covers/${this.book.slug}.jpg`" class="img-fluid img-thumbnail book-cover" alt="cover">
                     </div>
 
@@ -57,7 +57,7 @@
                             class="form-select"
                             required
                             size="7"
-                            v-models="this.book.genre_ids"
+                            v-model="this.book.genre_ids"
                             multiple>
                             <option v-for="g in this.genres" :value="g.value" :key="g.value">{{ g.text }}</option>
                         </select>
@@ -73,6 +73,8 @@
                     <div class="float-end">
                         <a v-if="this.book.id > 0" class="btn btn-danger" href="javascript:void(0);" @click="confirmDelete(this.book.id)">Delete</a>
                     </div>
+                    
+                    <div class="clearfix"></div>
 
                 </form-tag>
             </div>
@@ -90,12 +92,7 @@ import router from '@/router';
 import notie from 'notie';
 
 export default {
-    name: 'BookEdit',
-    components: { 
-        'form-tag': FormTag,
-        'text-input': TextInput,
-        'select-input': SelectInput,  
-    },
+    name: "BookEdit",
     beforeMount() {
         Security.requireToken();
 
@@ -129,6 +126,11 @@ export default {
             }
         })
     },
+    components: { 
+        'form-tag': FormTag,
+        'text-input': TextInput,
+        'select-input': SelectInput,  
+    },
     data() {
         return {
             book: {
@@ -151,7 +153,7 @@ export default {
                 {value: 4, text: "Thriller"},
                 {value: 5, text: "Mystery"},
                 {value: 6, text: "Horror"},
-                {value: 7, text: "Classic"},
+                {value: 7, text: "Classic"}
             ]
         }
     },
@@ -193,7 +195,7 @@ export default {
                     .replace("data:", "")
                     .replace(/^.+,/, "");
                 this.book.cover = base64String;
-                alert(base64String);
+                //alert(base64String);
             }
             reader.readAsDataURL(file);
         },

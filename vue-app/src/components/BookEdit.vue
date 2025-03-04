@@ -57,7 +57,7 @@
                             class="form-select"
                             required
                             size="7"
-                            v-models="this.book.genre_ids"
+                            v-model="this.book.genre_ids"
                             multiple>
                             <option v-for="g in this.genres" :value="g.value" :key="g.value">{{ g.text }}</option>
                         </select>
@@ -193,7 +193,7 @@ export default {
                     .replace("data:", "")
                     .replace(/^.+,/, "");
                 this.book.cover = base64String;
-                alert(base64String);
+                //alert(base64String);
             }
             reader.readAsDataURL(file);
         },

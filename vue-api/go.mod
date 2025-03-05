@@ -5,6 +5,7 @@ go 1.23.6
 require github.com/mozillazg/go-slugify v0.2.0
 
 require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/go-chi/chi/v5 v5.2.1 // indirect
 	github.com/go-chi/cors v1.2.1 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect

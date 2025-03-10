@@ -49,7 +49,7 @@ export default {
         first_name: cookieData.user.first_name,
         last_name: cookieData.user.last_name,
         email: cookieData.user.email,
-      };
+      }
     }
   },
   methods: {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	//"encoding/json"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -26,9 +25,8 @@ type jsonResponse struct {
 
 type envelope map[string]interface{}
 
-// Login is the hanlder used to attemp to log a user into the api
+// Login is the handler used to attempt to log a user into the api
 func (app *application) Login(w http.ResponseWriter, r *http.Request) {
-
 	type credentials struct {
 		UserName string `json:"email"`
 		Password string `json:"password"`
@@ -41,51 +39,48 @@ func (app *application) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		app.errorLog.Println(err)
 		payload.Error = true
-		payload.Message = "Invalid json suplied, or json missing entirely"
+		payload.Message = "invalid json supplied, or json missing entirely"
 		_ = app.writeJSON(w, http.StatusBadRequest, payload)
 	}
 
-	// TODO authenticate
-	app.infoLog.Println("Username:", creds.UserName, ". Password:", creds.Password)
-
-	// Look up the user by email
+	// look up the user by email
 	user, err := app.models.User.GetByEmail(creds.UserName)
 	if err != nil {
-		app.errorJSON(w, errors.New("1invalid username/password"))
+		app.errorJSON(w, errors.New("invalid username/password"))
 		return
 	}
 
-	// Validate the user's password
+	// validate the user's password
 	validPassword, err := user.PasswordMatches(creds.Password)
 	if err != nil || !validPassword {
-		app.errorJSON(w, errors.New("2invalid username/password"))
+		app.errorJSON(w, errors.New("invalid username/password"))
 		return
 	}
 
-	// Make sure user is active
+	// make sure user is active
 	if user.Active == 0 {
 		app.errorJSON(w, errors.New("user is not active"))
 		return
 	}
 
-	// We have a valid user, so generate a token
+	// we have a valid user, so generate a token
 	token, err := app.models.Token.GenerateToken(user.ID, 24*time.Hour)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
 	}
 
-	// Save it to the database
+	// save it to the database
 	err = app.models.Token.Insert(*token, *user)
 	if err != nil {
 		app.errorJSON(w, err)
 		return
 	}
 
-	//send back a response
+	// send back a response
 	payload = jsonResponse{
 		Error:   false,
-		Message: "Logged in",
+		Message: "logged in",
 		Data:    envelope{"token": token, "user": user},
 	}
 
@@ -114,15 +109,17 @@ func (app *application) Logout(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "Logged out",
+		Message: "logged out",
 	}
 
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// AllUsers is the handler which lists all users. Note that this
+// handler should be protected in the routes file, and require that
+// the user have a valid token
 func (app *application) AllUsers(w http.ResponseWriter, r *http.Request) {
 	var users data.User
-
 	all, err := users.GetAll()
 	if err != nil {
 		app.errorLog.Println(err)
@@ -131,13 +128,14 @@ func (app *application) AllUsers(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "Success",
+		Message: "success",
 		Data:    envelope{"users": all},
 	}
 
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// EditUser saves a new user, or updates a user, in the database
 func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
 	var user data.User
 	err := app.readJSON(w, r, &user)
@@ -147,13 +145,13 @@ func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.ID == 0 {
-		// Add user
+		// add user
 		if _, err := app.models.User.Insert(user); err != nil {
 			app.errorJSON(w, err)
 			return
 		}
 	} else {
-		// Editing user
+		// editing user
 		u, err := app.models.User.GetOne(user.ID)
 		if err != nil {
 			app.errorJSON(w, err)
@@ -170,7 +168,7 @@ func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// if password != strin, update password
+		// if password != string, update password
 		if user.Password != "" {
 			err := u.ResetPassword(user.Password)
 			if err != nil {
@@ -182,11 +180,13 @@ func (app *application) EditUser(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "Changes saved!",
+		Message: "Changes saved",
 	}
+
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 }
 
+// GetUser returns one user as JSON
 func (app *application) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -203,6 +203,7 @@ func (app *application) GetUser(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, user)
 }
 
+// DeleteUser delets a user from the users table by the id given in the supplied JSON file
 func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		ID int `json:"id"`
@@ -228,6 +229,9 @@ func (app *application) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// LogUserOutAndSetInactive sets the user specified by the id value in the supplied JSON
+// to inactive, and deletes any tokens associated with that user id from the tokens table
+// in the database
 func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.Request) {
 	userID, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -248,7 +252,7 @@ func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// Delete token for user
+	// delete tokens for user
 	err = app.models.Token.DeleteTokensForUser(userID)
 	if err != nil {
 		app.errorJSON(w, err)
@@ -257,12 +261,14 @@ func (app *application) LogUserOutAndSetInactive(w http.ResponseWriter, r *http.
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "User logged out and set to inactive",
+		Message: "user logged out and set to inactive",
 	}
 
 	_ = app.writeJSON(w, http.StatusAccepted, payload)
 }
 
+// ValidateToken accepts a JSON payload with a plain text token, and returns
+// true if that token is valid, or false if it is not, as a JSON response
 func (app *application) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	var requestPayload struct {
 		Token string `json:"token"`
@@ -285,6 +291,7 @@ func (app *application) ValidateToken(w http.ResponseWriter, r *http.Request) {
 	_ = app.writeJSON(w, http.StatusOK, payload)
 }
 
+// AllBooks returns all books as JSON
 func (app *application) AllBooks(w http.ResponseWriter, r *http.Request) {
 	books, err := app.models.Book.GetAll()
 	if err != nil {
@@ -301,6 +308,7 @@ func (app *application) AllBooks(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// OneBook returns one books as JSON, by slug
 func (app *application) OneBook(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 
@@ -318,6 +326,7 @@ func (app *application) OneBook(w http.ResponseWriter, r *http.Request) {
 	app.writeJSON(w, http.StatusOK, payload)
 }
 
+// AuthorsAll returns a list of all authors consisting of author id and author name, as JSON
 func (app *application) AuthorsAll(w http.ResponseWriter, r *http.Request) {
 	all, err := app.models.Author.All()
 	if err != nil {
@@ -337,6 +346,7 @@ func (app *application) AuthorsAll(w http.ResponseWriter, r *http.Request) {
 			Value: x.ID,
 			Text:  x.AuthorName,
 		}
+
 		results = append(results, author)
 	}
 
@@ -376,14 +386,14 @@ func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(requestPayload.CoverBase64) > 0 {
-		// We have a cover
+		// we have a cover
 		decoded, err := base64.StdEncoding.DecodeString(requestPayload.CoverBase64)
 		if err != nil {
 			app.errorJSON(w, err)
 			return
 		}
 
-		// Write image to '/static/covers'
+		// write image to /static/covers
 		if err := os.WriteFile(fmt.Sprintf("%s/covers/%s.jpg", staticPath, book.Slug), decoded, 0666); err != nil {
 			app.errorJSON(w, err)
 			return
@@ -391,7 +401,7 @@ func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if book.ID == 0 {
-		// ading a book
+		// adding a book
 		_, err := app.models.Book.Insert(book)
 		if err != nil {
 			app.errorJSON(w, err)
@@ -408,7 +418,7 @@ func (app *application) EditBook(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "Changes saved!",
+		Message: "Changes saved",
 	}
 
 	app.writeJSON(w, http.StatusAccepted, payload)
@@ -454,8 +464,9 @@ func (app *application) DeleteBook(w http.ResponseWriter, r *http.Request) {
 
 	payload := jsonResponse{
 		Error:   false,
-		Message: "Book deleted!",
+		Message: "Book deleted",
 	}
 
 	app.writeJSON(w, http.StatusOK, payload)
+
 }

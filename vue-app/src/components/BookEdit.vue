@@ -2,10 +2,10 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1 class="mt-3">Add / Book Edit</h1>
+                <h1 class="mt-3">Add/Edit Book</h1>
                 <hr>
 
-                <form-tag @bookEditEvent="submitHandler" name="bookForm" event="bookEditEvent"> 
+                <form-tag @bookEditEvent="submitHandler" name="bookForm" event="bookEditEvent">
 
                     <div v-if="this.book.slug !== ''" class="mb-3">
                         <img :src="`${this.imgPath}/covers/${this.book.slug}.jpg`" class="img-fluid img-thumbnail book-cover" alt="cover">
@@ -13,9 +13,9 @@
 
                     <div class="mb-3">
                         <label for="formFile" class="form-label">Cover Image</label>
-                        <input v-if="this.book.id === 0" ref="coverInput" class="form-control" type="file" if="formFile"
+                        <input v-if="this.book.id === 0" ref="coverInput" class="form-control" type="file" id="formFile"
                             required accept="image/jpeg" @change="loadCoverImage">
-                        <input v-else ref="coverInput" class="form-control" type="file" if="formFile"
+                        <input v-else ref="coverInput" class="form-control" type="file" id="formFile"
                             accept="image/jpeg" @change="loadCoverImage">
                     </div>
 
@@ -25,16 +25,14 @@
                         required="true"
                         label="Title"
                         :value="book.title"
-                        name="title">
-                    </text-input>  
+                        name="title"></text-input>
 
                     <select-input
-                    name="author_id"
-                    v-model="this.book.author_id"
-                    :items="this.authors"
-                    required="required"
-                    label="Author">                        
-                    </select-input>
+                        name="author-id"
+                        v-model="this.book.author_id"
+                        :items="this.authors"
+                        required="required"
+                        label="Author"></select-input>
 
                     <text-input
                         v-model="book.publication_year"
@@ -42,8 +40,7 @@
                         required="true"
                         label="Publication Year"
                         :value="book.publication_year"
-                        name="publication-year">
-                    </text-input> 
+                        name="publication-year"></text-input>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
@@ -59,21 +56,24 @@
                             size="7"
                             v-model="this.book.genre_ids"
                             multiple>
-                            <option v-for="g in this.genres" :value="g.value" :key="g.value">{{ g.text }}</option>
+                            <option v-for="g in this.genres" :value="g.value" :key="g.value">
+                                {{g.text}}
+                            </option>
                         </select>
                     </div>
-                    
+
                     <hr>
 
                     <div class="float-start">
                         <input type="submit" class="btn btn-primary me-2" value="Save" />
-                        <router-link to="/admin/books" class="btn btn-outline-secondary">Cancel</router-link> 
+                        <router-link to="/admin/books" class="btn btn-outline-secondary">Cancel</router-link>
                     </div>
-
                     <div class="float-end">
-                        <a v-if="this.book.id > 0" class="btn btn-danger" href="javascript:void(0);" @click="confirmDelete(this.book.id)">Delete</a>
+                        <a v-if="this.book.id > 0"
+                            class="btn btn-danger" href="javascript:void(0);" @click="confirmDelete(this.book.id)">
+                            Delete
+                        </a>
                     </div>
-                    
                     <div class="clearfix"></div>
 
                 </form-tag>
@@ -83,20 +83,19 @@
 </template>
 
 <script>
-import FormTag from './forms/FormTag.vue';
-import TextInput from './forms/TextInput.vue';
-import SelectInput from './forms/SelectInput.vue';
 import Security from './security.js'
-import router from '@/router';
-//import { routeLocationKey } from 'vue-router';
-import notie from 'notie';
+import FormTag from '@/components/forms/FormTag'
+import TextInput from '@/components/forms/TextInput'
+import SelectInput from '@/components/forms/SelectInput'
+import router from '@/router'
+import notie from 'notie'
 
 export default {
     name: "BookEdit",
     beforeMount() {
         Security.requireToken();
 
-        // get book for edit if id>0
+        // get book for edit if id > 0 
         if (this.$route.params.bookId > 0) {
             // editing a book
             fetch(process.env.VUE_APP_API_URL + "/admin/books/" + this.$route.params.bookId, Security.requestOptions(""))
@@ -126,10 +125,10 @@ export default {
             }
         })
     },
-    components: { 
+    components: {
         'form-tag': FormTag,
         'text-input': TextInput,
-        'select-input': SelectInput,  
+        'select-input': SelectInput,
     },
     data() {
         return {
@@ -153,7 +152,7 @@ export default {
                 {value: 4, text: "Thriller"},
                 {value: 5, text: "Mystery"},
                 {value: 6, text: "Horror"},
-                {value: 7, text: "Classic"}
+                {value: 7, text: "Classic"},
             ]
         }
     },
@@ -162,7 +161,7 @@ export default {
             const payload = {
                 id: this.book.id,
                 title: this.book.title,
-                author_id: parseInt(this.book.author_id, 10),
+                author_id : parseInt(this.book.author_id, 10),
                 publication_year: parseInt(this.book.publication_year, 10),
                 description: this.book.description,
                 cover: this.book.cover,
@@ -170,32 +169,34 @@ export default {
                 genre_ids: this.book.genre_ids,
             }
 
+            // console.log(payload);
+
             fetch(`${process.env.VUE_APP_API_URL}/admin/books/save`, Security.requestOptions(payload))
             .then((response) => response.json())
             .then((data) => {
                 if (data.error) {
-                    this.$emit('error', data.message);
+                    this.$emit('error', data.message)
                 } else {
-                    this.$emit('success', "Changes saved!");
+                    this.$emit('success', 'Changes saved');
                     router.push("/admin/books");
                 }
             })
-            .catch((error) => {
+            .catch((error) =>{
                 this.$emit('error', error);
             })
         },
         loadCoverImage() {
-            // Get a reference to the input using ref
-            const file =  this.$refs.coverInput.files[0];
+            // get a reference to the input using ref
+            const file = this.$refs.coverInput.files[0];
 
-            // Encode the file using the FileReader API
+            // encode the file using the FileReader API
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64String = reader.result
                     .replace("data:", "")
                     .replace(/^.+,/, "");
                 this.book.cover = base64String;
-                //alert(base64String);
+                // alert(base64String);
             }
             reader.readAsDataURL(file);
         },
@@ -214,7 +215,7 @@ export default {
                         if (data.error) {
                             this.$emit('error', data.message);
                         } else {
-                            this.$emit('success', "Book deleted!");
+                            this.$emit('success', "Book deleted");
                             router.push("/admin/books");
                         }
                     })
